@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
 set -x
 
 install_cf() {
@@ -21,9 +23,6 @@ install_active_deploy() {
   cf install-plugin active-deploy -r bluemix-staging
 }
 
-
-set -x
-
 install_cf() {
   local __target_loc=${1}
   
@@ -41,7 +40,7 @@ install_active_deploy() {
   #fi
   cf uninstall-plugin active-deploy || true
   # cf install-plugin active-deploy -r bluemix-staging
-  cf install-plugin active-deploy-linux-amd64-01.18
+  cf install-plugin ${SCRIPTDIR}/active-deploy-linux-amd64-01.18
 }
 
 which ice
