@@ -73,10 +73,13 @@ fi
 
 # Deploy new group
 echo "Create successor group"
-${SCRIPTDIR}/deploygroup.sh
+${SCRIPTDIR}/deploygroup.sh || true
+
+ice group list
+ice ps
 
 # Do update
-create_command="cf active-deploy-create ${original_grp} ${successor_grp} --quiet"  # add label w/ build number
+create_command="cf active-deploy-create ${original_grp} ${successor_grp} --quiet --label Explore_${BUILD_NUMBER}"
 if [[ -n "${RAMPUP}" ]]; then create_command="${create_command} --rampup ${RAMPUP}s"; fi
 if [[ -n "${TEST}" ]]; then create_command="${create_command} --test ${TEST}s"; fi
 if [[ -n "${RAMPDOWN}" ]]; then create_command="${create_command} --rampdown ${RAMPDOWN}s"; fi

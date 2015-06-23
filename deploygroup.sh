@@ -16,7 +16,6 @@
 #********************************************************************************
 
 # load helper functions
-set -x
 source $(dirname "$0")/deploy_utilities.sh
 
 print_create_fail_msg () {
