@@ -45,21 +45,33 @@ ice group list
 ice ps
 ice images
 
-## Identify any existing group
-#TRUNC_PREFIX=$(echo ${PREFIX} | cut -c 1-16)
-#read -a ORIGINAL <<< $(ice group list | grep -v 'Group Id' | awk '{print $2}' | grep ${TRUNC_PREFIX})
-## This gave us a whole list of them
-#
-## Delete $ORIGINAL groups
-#deleted=()
-#if [[ ${#ORIGINAL[@]} -gt ${CONCURRENT_VERSIONS} ]]; then
-#  for orig in "${ORIGINAL[@]:${CONCURRENT_VERSIONS}}"; do
-#    ice group rm ${orig}
-#    deleted+=(${orig})
-#  done
-#fi
-#
-## Ensure deleted groups are deleted (keep this?)
-#for orig in ${deleted}; do
-#  wait_group_rm ${orig}
-#done
+PREFIX=priya_homestead
+
+# Identify any existing group
+TRUNC_PREFIX=$(echo ${PREFIX} | cut -c 1-16)
+read -a ORIGINAL <<< $(ice group list | grep -v 'Group Id' | grep " ${TRUNC_PREFIX}" | awk '{print $1}')
+# This gave us a whole list of group ids
+
+echo "Original groups: ${ORIGINAL[@]}"
+
+# Determine which original groups has the desired route --> the current original
+for orig in ${ORIGINAL}; do
+  echo "Processing ${orig}
+  group_id=$orig route=python ${SCRIPTDIR}/foo.py
+  echo "Done processing ${orig}
+done
+
+
+# Delete $ORIGINAL groups
+deleted=()
+if [[ ${#ORIGINAL[@]} -gt ${CONCURRENT_VERSIONS} ]]; then
+  for orig in "${ORIGINAL[@]:${CONCURRENT_VERSIONS}}"; do
+    echo ice group rm ${orig}
+    deleted+=(${orig})
+  done
+fi
+
+# Ensure deleted groups are deleted (keep this?)
+for orig in ${deleted}; do
+  echo wait_group_rm ${orig}
+done
