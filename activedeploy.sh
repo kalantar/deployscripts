@@ -52,30 +52,34 @@ TRUNC_PREFIX=$(echo ${PREFIX} | cut -c 1-16)
 read -a ORIGINAL <<< $(ice group list | grep -v 'Group Id' | grep " ${TRUNC_PREFIX}" | awk '{print $1}')
 # This gave us a whole list of group ids
 
-echo "Original groups: ${ORIGINAL[@]}"
+echo Original groups: ${#ORIGINAL[@]}: ${ORIGINAL[@]}
 
 # Determine which original groups has the desired route --> the current original
 ROUTED=()
-for orig in ${ORIGINAL}; do
-  echo "Processing ${orig}
-  ROUTED=(${ROUTED[@]} $(group_id=${orig} route="${ROUTE_HOSTNAME}.${ROUTE_DOMAIN}" python ${SCRIPTDIR}/foo.py))
-  echo "Done processing ${orig}
+for orig in ${ORIGINAL[@]}; do
+  echo "Processing ${orig}"
+  ROUTED=( ${ROUTED[@]} $(group_id=${orig} route="${ROUTE_HOSTNAME}.${ROUTE_DOMAIN}" python ${SCRIPTDIR}/foo.py) )
+  echo groups: ${#ROUTED[@]}: ${ROUTED[@]}
+  echo "Done processing ${orig}"
 done
 echo "Found: ${ROUTED[@]}"
 if (( 1 < ${#ROUTED[@]} )); then
   echo "More than one group is already routed to target, selecting oldest to replace"
 fi
-original_grp=${ROUTED[${expr "${#ROUTED[@]}-1"]}
-echo "Replacing original group: ${original_grp}"
+if (( 0 < ${#ROUTED[@]} )); then
+  original_grp=${ROUTED[$(expr ${#ROUTED[@]} - 1)]}
+  echo "Replacing original group: ${original_grp}"
+fi
 
 # Deploy new group
 echo "Create successor group"
+${SCRIPTDIR}/deploygroup.sh
 
 # Do update
 create_command="cf active-deploy-create ${original_grp} ${successor_grp} --quiet"  # add label w/ build number
 if [[ -n "${RAMPUP}" ]]; then create_command="${create_command} --rampup ${RAMPUP}s"; fi
 if [[ -n "${TEST}" ]]; then create_command="${create_command} --test ${TEST}s"; fi
-if [[ -n "${RAMPDOWN}" ]]; then create_command="${create_command} --rampdown ${RAMPDOWN}s"; fi 
+if [[ -n "${RAMPDOWN}" ]]; then create_command="${create_command} --rampdown ${RAMPDOWN}s"; fi
 echo update=${create_command}
 
 # Wait for completion
@@ -83,14 +87,16 @@ echo cf active-deploy-check-phase --phase final $update
 
 # Delete $ORIGINAL groups
 deleted=()
-if [[ ${#ORIGINAL[@]} -gt ${CONCURRENT_VERSIONS} ]]; then
-  for orig in "${ORIGINAL[@]:${CONCURRENT_VERSIONS}}"; do
+versions_to_key=$(expr ${CONCURRENT_VERSIONS} - 1)
+if [[ ${#ORIGINAL[@]} -gt ${versions_to_keep} ]]; then
+  for orig in "${ORIGINAL[@]:${versions_to_keep}}"; do
     echo ice group rm ${orig}
-    $deleted+=(${orig})
+    deleted=( deleted[@] ${orig} )
   done
 fi
 
 # Ensure deleted groups are deleted (keep this?)
-for orig in ${deleted}; do
+for orig in ${deleted[@]}; do
   echo wait_group_rm ${orig}
 done
+

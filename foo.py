@@ -1,8 +1,10 @@
 
+from __future__ import print_function
 import json
 import os
 import re
 import subprocess
+import sys
 import time
 
 def bash(command):
@@ -31,11 +33,11 @@ def grp_info(group):
 def main():
     group_id = os.getenv('group_id')
     route = os.getenv('route')
-#     print(group_id)
+    print('X{}X'.format(group_id), file=sys.stderr)
     if group_id:
         grp = grp_info(group_id)
-#         print(grp)
-        if 'Routes' in grp and route in grp['Routes']:
+        print(grp, file=sys.stderr)
+        if grp and 'Routes' in grp and route in grp['Routes']:
             print(grp['Id'])
     
 if __name__ == '__main__':

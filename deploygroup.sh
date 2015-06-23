@@ -16,6 +16,7 @@
 #********************************************************************************
 
 # load helper functions
+set -x
 source $(dirname "$0")/deploy_utilities.sh
 
 print_create_fail_msg () {
@@ -616,20 +617,24 @@ else
     fi
 fi
 
-if [ "${DEPLOY_TYPE}" == "simple" ]; then
-    deploy_simple
-elif [ "${DEPLOY_TYPE}" == "simple_public" ]; then
-    deploy_public
-elif [ "${DEPLOY_TYPE}" == "clean" ]; then
-    clean
-elif [ "${DEPLOY_TYPE}" == "red_black" ]; then
-    deploy_red_black
-else
-    log_and_echo "$WARN" "Currently only supporting 'red_black' deployment and 'clean' strategy"
-    log_and_echo "$WARN" "If you would like another strategy please fork https://github.com/Osthanes/deployscripts.git and submit a pull request"
-    log_and_echo "$WARN" "Defaulting to red_black deploy"
-    deploy_red_black
-fi
+DESIRED_INSTANCES=1
+deploy_simple
+exit 0
+
+#MK#if [ "${DEPLOY_TYPE}" == "simple" ]; then
+#MK#    deploy_simple
+#MK#elif [ "${DEPLOY_TYPE}" == "simple_public" ]; then
+#MK#    deploy_public
+#MK#elif [ "${DEPLOY_TYPE}" == "clean" ]; then
+#MK#    clean
+#MK#elif [ "${DEPLOY_TYPE}" == "red_black" ]; then
+#MK#    deploy_red_black
+#MK#else
+#MK#    log_and_echo "$WARN" "Currently only supporting 'red_black' deployment and 'clean' strategy"
+#MK#    log_and_echo "$WARN" "If you would like another strategy please fork https://github.com/Osthanes/deployscripts.git and submit a pull request"
+#MK#    log_and_echo "$WARN" "Defaulting to red_black deploy"
+#MK#    deploy_red_black
+#MK#fi
 
 dump_info
 ${EXT_DIR}/utilities/sendMessage.sh -l good -m "Successful ${DEPLOY_TYPE} container group deployment of ${CONTAINER_NAME}"
