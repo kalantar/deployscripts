@@ -55,12 +55,30 @@ read -a ORIGINAL <<< $(ice group list | grep -v 'Group Id' | grep " ${TRUNC_PREF
 echo "Original groups: ${ORIGINAL[@]}"
 
 # Determine which original groups has the desired route --> the current original
+ROUTED=()
 for orig in ${ORIGINAL}; do
   echo "Processing ${orig}
-  group_id=$orig route=python ${SCRIPTDIR}/foo.py
+  ROUTED+=($(group_id=${orig} route="${ROUTE_HOSTNAME}.${ROUTE_DOMAIN}" python ${SCRIPTDIR}/foo.py))
   echo "Done processing ${orig}
 done
+if (( 1 < ${#ROUTED[@]} )); then
+  echo "More than one group is already routed to target, selecting oldest to replace"
+fi
+original_grp=${ROUTED[${#ROUTED[@]} - 1]}
+echo "Replacing original group: ${original_grp}"
 
+# Deploy new group
+echo "Create group"
+
+# Do update
+create_command="cf active-deploy-create ${original_grp} ${successor_grp} --quiet"  # add label w/ build number
+if [[ -n "${RAMPUP}" ]]; then create_command="${create_command} --rampup ${RAMPUP}s" 
+if [[ -n "${TEST}" ]]; then create_command="${create_command} --test ${TEST}s" 
+if [[ -n "${RAMPDOWN}" ]]; then create_command="${create_command} --rampdown ${RAMPDOWN}s" 
+echo update=${create_command}
+
+# Wait for completion
+echo cf active-deploy-check-phase --phase final $update
 
 # Delete $ORIGINAL groups
 deleted=()
