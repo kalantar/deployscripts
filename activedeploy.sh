@@ -64,17 +64,17 @@ done
 if (( 1 < ${#ROUTED[@]} )); then
   echo "More than one group is already routed to target, selecting oldest to replace"
 fi
-original_grp=${ROUTED[${#ROUTED[@]} - 1]}
+original_grp=${ROUTED[${expr "#ROUTED[@]}-1"]}
 echo "Replacing original group: ${original_grp}"
 
 # Deploy new group
-echo "Create group"
+echo "Create successor group"
 
 # Do update
 create_command="cf active-deploy-create ${original_grp} ${successor_grp} --quiet"  # add label w/ build number
-if [[ -n "${RAMPUP}" ]]; then create_command="${create_command} --rampup ${RAMPUP}s" 
-if [[ -n "${TEST}" ]]; then create_command="${create_command} --test ${TEST}s" 
-if [[ -n "${RAMPDOWN}" ]]; then create_command="${create_command} --rampdown ${RAMPDOWN}s" 
+if [[ -n "${RAMPUP}" ]]; then create_command="${create_command} --rampup ${RAMPUP}s"; fi
+if [[ -n "${TEST}" ]]; then create_command="${create_command} --test ${TEST}s"; fi
+if [[ -n "${RAMPDOWN}" ]]; then create_command="${create_command} --rampdown ${RAMPDOWN}s"; fi 
 echo update=${create_command}
 
 # Wait for completion

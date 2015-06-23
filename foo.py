@@ -31,12 +31,12 @@ def grp_info(group):
 def main():
     group_id = os.getenv('group_id')
     route = os.getenv('route')
-    print(group_id)
+#     print(group_id)
     if group_id:
         grp = grp_info(group_id)
 #         print(grp)
         if 'Routes' in grp and route in grp['Routes']:
-            print(grp)
+            print(grp['Id'])
     
 if __name__ == '__main__':
     main()
