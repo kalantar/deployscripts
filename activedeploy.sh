@@ -58,9 +58,10 @@ echo "Original groups: ${ORIGINAL[@]}"
 ROUTED=()
 for orig in ${ORIGINAL}; do
   echo "Processing ${orig}
-  ROUTED+=($(group_id=${orig} route="${ROUTE_HOSTNAME}.${ROUTE_DOMAIN}" python ${SCRIPTDIR}/foo.py))
+  $ROUTED+=($(group_id=${orig} route="${ROUTE_HOSTNAME}.${ROUTE_DOMAIN}" python ${SCRIPTDIR}/foo.py))
   echo "Done processing ${orig}
 done
+echo "Found: ${ROUTED[@]}"
 if (( 1 < ${#ROUTED[@]} )); then
   echo "More than one group is already routed to target, selecting oldest to replace"
 fi
@@ -85,7 +86,7 @@ deleted=()
 if [[ ${#ORIGINAL[@]} -gt ${CONCURRENT_VERSIONS} ]]; then
   for orig in "${ORIGINAL[@]:${CONCURRENT_VERSIONS}}"; do
     echo ice group rm ${orig}
-    deleted+=(${orig})
+    $deleted+=(${orig})
   done
 fi
 
