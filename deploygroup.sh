@@ -366,7 +366,7 @@ deploy_group() {
     wait_for_group ${MY_GROUP_NAME}
     RESULT=$?
     if [ $RESULT -eq 0 ]; then
-        insert_inventory "ibm_containers_group" ${MY_GROUP_NAME}
+#MK#MK#        insert_inventory "ibm_containers_group" ${MY_GROUP_NAME}
 
         # Map route the container group
         if [[ ( -n "${ROUTE_DOMAIN}" ) && ( -n "${ROUTE_HOSTNAME}" ) && ( "$ROUTE_HOSTNAME" != "None" ) ]]; then
@@ -421,6 +421,32 @@ deploy_red_black () {
         ${EXT_DIR}/utilities/sendMessage.sh -l bad -m "Deployment of ${MY_GROUP_NAME} failed"
         exit $RESULT
     fi
+
+    if [ -z "$REMOVE_FROM" ]; then
+        clean
+        RESULT=$?
+        if [ $RESULT -ne 0 ]; then
+            ${EXT_DIR}/utilities/sendMessage.sh -l bad -m "Failed to cleanup previous groups after deployment of group ${MY_GROUP_NAME}"
+            exit $RESULT
+        fi
+    else
+        log_and_echo "Not removing previous instances until after testing"
+    fi
+    return 0
+}
+
+deploy_active_deploy () {
+    log_and_echo "$LABEL" "Example active-deploy container deploy "
+    # deploy new version of the application
+    local MY_GROUP_NAME="${CONTAINER_NAME}_${BUILD_NUMBER}"
+    deploy_group ${MY_GROUP_NAME}
+    local RESULT=$?
+    if [ $RESULT -ne 0 ]; then
+        ${EXT_DIR}/utilities/sendMessage.sh -l bad -m "Deployment of ${MY_GROUP_NAME} failed"
+        exit $RESULT
+    fi
+
+    $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/activedeploy.sh
 
     if [ -z "$REMOVE_FROM" ]; then
         clean
@@ -495,7 +521,7 @@ clean() {
                 log_and_echo "$WARN" "Cleaning up previous deployments is not completed"
                 return 0
             fi
-            delete_inventory "ibm_containers_group" ${groupName}
+#MK#MK#            delete_inventory "ibm_containers_group" ${groupName}
             FIND_PREVIOUS="true"
         fi
 
@@ -616,24 +642,25 @@ else
     fi
 fi
 
-DESIRED_INSTANCES=1
-deploy_simple
-exit 0
-
-#MK#if [ "${DEPLOY_TYPE}" == "simple" ]; then
-#MK#    deploy_simple
-#MK#elif [ "${DEPLOY_TYPE}" == "simple_public" ]; then
-#MK#    deploy_public
-#MK#elif [ "${DEPLOY_TYPE}" == "clean" ]; then
-#MK#    clean
-#MK#elif [ "${DEPLOY_TYPE}" == "red_black" ]; then
-#MK#    deploy_red_black
-#MK#else
-#MK#    log_and_echo "$WARN" "Currently only supporting 'red_black' deployment and 'clean' strategy"
-#MK#    log_and_echo "$WARN" "If you would like another strategy please fork https://github.com/Osthanes/deployscripts.git and submit a pull request"
-#MK#    log_and_echo "$WARN" "Defaulting to red_black deploy"
-#MK#    deploy_red_black
-#MK#fi
+if [ "${DEPLOY_TYPE}" == "simple" ]; then
+    deploy_simple
+elif [ "${DEPLOY_TYPE}" == "simple_public" ]; then
+    deploy_public
+elif [ "${DEPLOY_TYPE}" == "clean" ]; then
+    clean
+elif [ "${DEPLOY_TYPE}" == "red_black" ]; then
+    deploy_red_black
+elif [ "${DEPLOY_TYPE}" == "active_deploy" ]; then
+    DESIRED_INSTANCES=1
+    MEMORY="--memory 128"
+    unset ROUTE_HOSTNAME
+    deploy_active_deploy
+else
+    log_and_echo "$WARN" "Currently only supporting 'red_black' deployment and 'clean' strategy"
+    log_and_echo "$WARN" "If you would like another strategy please fork https://github.com/Osthanes/deployscripts.git and submit a pull request"
+    log_and_echo "$WARN" "Defaulting to red_black deploy"
+    deploy_red_black
+fi
 
 dump_info
 ${EXT_DIR}/utilities/sendMessage.sh -l good -m "Successful ${DEPLOY_TYPE} container group deployment of ${CONTAINER_NAME}"
