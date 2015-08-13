@@ -115,19 +115,46 @@ wait_for_update (){
     return 3
 }
 
+function get_originals(){
+  local __prefix=$(echo ${PREFIX} | cut -c 1-16)
+  local __originals=${2}
 
+  local originals
+
+  if [[ "CCS" == "${BACKEND}" ]]; then
+    read -a originals <<< $(ice group list | grep -v 'Group Id' | grep " ${__prefix}" | awk '{print $1}')
+  elif [[ "APPS" == "${BACKEND}" ]]; then
+    read -a originals <<< $(cf apps | grep -v "^Getting" | grep -v "^OK" | grep -v "^name" | grep ${_prefix} | awk '{print $1}')
+  else
+    >&2 echo "ERROR: Unknown backend ${BACKEND}; expected one of \"CCS\" or \"APPS\""
+    return 3
+  fi
+  
+  echo ${#originals[@]} original groups found: ${originals[@]}
+  eval $__originals="'$originals'"
+}
+
+###################################################################################
+###################################################################################
+
+if [[ -z ${BACKEND} ]]; then
+  echo "ERROR: Backend not specified"
+  exit 1
+fi
 
 install_cf
 install_active_deploy
 
-# Identify original group(s)
-PREFIX=${CONTAINER_NAME}
+get_originals $PREFIX ORIGINAL
 
-TRUNC_PREFIX=$(echo ${PREFIX} | cut -c 1-16)
-read -a ORIGINAL <<< $(ice group list | grep -v 'Group Id' | grep " ${TRUNC_PREFIX}" | awk '{print $1}')
-# This gave us a whole list of group ids
-
-echo ${#ORIGINAL[@]} original groups found: ${ORIGINAL[@]}
+#G_O## Identify original group(s)
+#G_O#PREFIX=${CONTAINER_NAME}
+#G_O#
+#G_O#TRUNC_PREFIX=$(echo ${PREFIX} | cut -c 1-16)
+#G_O#read -a ORIGINAL <<< $(ice group list | grep -v 'Group Id' | grep " ${TRUNC_PREFIX}" | awk '{print $1}')
+#G_O## This gave us a whole list of group ids
+#G_O#
+#G_O#echo ${#ORIGINAL[@]} original groups found: ${ORIGINAL[@]}
 
 # Determine which original groups has the desired route --> the current original
 ROUTED=()

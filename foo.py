@@ -33,10 +33,10 @@ def grp_info(group):
 def main():
     group_id = os.getenv('group_id')
     route = os.getenv('route')
-    print('X{}X'.format(group_id), file=sys.stderr)
+#     print('X{}X'.format(group_id), file=sys.stderr)
     if group_id:
         grp = grp_info(group_id)
-        print(grp, file=sys.stderr)
+#         print(grp, file=sys.stderr)
         if grp and 'Routes' in grp and route in grp['Routes']:
             print(grp['Id'])
     

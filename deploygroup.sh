@@ -652,7 +652,7 @@ elif [ "${DEPLOY_TYPE}" == "red_black" ]; then
     deploy_red_black
 elif [ "${DEPLOY_TYPE}" == "active_deploy" ]; then
     DESIRED_INSTANCES=1
-    MEMORY="--memory 128"
+    MEMORY="--memory 64"
     unset ROUTE_HOSTNAME
     deploy_active_deploy
 else
